@@ -113,19 +113,29 @@ def flight_tracker():
     if 'flight_history' not in session: session['flight_history'] = []
     
     if request.method == 'POST':
-        flight_number = request.form.get('flight_number')
+        search_type = request.form.get('search_type', 'flight')
+        search_query = request.form.get('search_query') or request.form.get('flight_number')
         
-        if flight_number:
+        if search_query:
             # Dynamically reload key in case .env was modified after server start
             flight_fetcher.api_key = os.getenv("AVIATIONSTACK_API_KEY")
-            flight_data = flight_fetcher.fetch_flight(flight_number)
+            
+            if search_type == 'airport':
+                flight_data = flight_fetcher.fetch_flights_by_airport(search_query)
+            elif search_type == 'country':
+                flight_data = flight_fetcher.fetch_flights_by_country(search_query)
+            else:
+                flight_data = flight_fetcher.fetch_flight(search_query)
             
             # Save search history
-            if flight_number.upper() not in session['flight_history']:
-                session['flight_history'] = [flight_number.upper()] + session['flight_history'][:4]
+            hist_item = f"{search_type.upper()}: {search_query.upper()}" if search_type != 'flight' else search_query.upper()
+            if hist_item not in session['flight_history']:
+                session['flight_history'] = [hist_item] + session['flight_history'][:4]
                 session.modified = True
+                
+        return render_template('flight.html', data=flight_data, history_list=session['flight_history'], search_type=search_type, search_query=search_query)
 
-    return render_template('flight.html', data=flight_data, history_list=session['flight_history'])
+    return render_template('flight.html', data=flight_data, history_list=session['flight_history'], search_type='flight', search_query='')
 
 if __name__ == '__main__':
     app.run(debug=True)
