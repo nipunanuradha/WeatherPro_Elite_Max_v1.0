@@ -313,7 +313,7 @@
                             <a href="{{ article.url or '#' }}" target="_blank" class="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
                                 <img src="{{ article.image or 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' }}" class="w-20 h-20 rounded-2xl object-cover shadow-sm" alt="News image">
                                 <div class="flex flex-col justify-center">
-                                    <h4 class="text-xs font-bold line-clamp-2">{{ article.title or 'Weather news headline missing' }}</h4>
+                                     <h4 class="text-xs font-bold line-clamp-2">{{ article.title or 'Weather news headline missing' }}</h4>
                                     <p class="text-[8px] text-slate-400 mt-2">{{ (article.publishedAt or '')[:10] }}</p>
                                 </div>
                             </a>
@@ -511,5 +511,16 @@
             });
         {% endif %}
     </script>
+
+    <!-- Footer Section -->
+    <footer class="max-w-7xl mx-auto p-8 mt-12 mb-12 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border dark:border-slate-800 text-center">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-slate-400 text-sm">&copy; 2026 WeatherPro Elite. Accurate Data. Premium Experience.</p>
+            <div class="flex items-center gap-6">
+                <a href="/privacy" class="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">Privacy Policy</a>
+                <a href="/terms" class="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">Terms & Conditions</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
