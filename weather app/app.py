@@ -75,6 +75,11 @@ def index():
         email = request.form.get('email')
         phone = request.form.get('phone')
         
+        # Save to session for persistence
+        session['last_city'] = city
+        session['last_city2'] = city2
+        session.modified = True
+        
         weather_data = fetcher.fetch_weather(city)
         if city2:
             weather_data2 = fetcher.fetch_weather(city2) # Get weather for second city if provided
@@ -102,6 +107,23 @@ def index():
                 if name not in session['history']:
                     session['history'] = [name] + session['history'][:4]
                     session.modified = True
+    else:
+        # Handle GET request - Check for persisted search
+        city = session.get('last_city')
+        city2 = session.get('last_city2')
+        if city:
+            weather_data = fetcher.fetch_weather(city)
+            if city2:
+                weather_data2 = fetcher.fetch_weather(city2)
+            
+            if weather_data and isinstance(weather_data, dict) and 'forecast' in weather_data:
+                history_graph = fetcher.fetch_7day_history(city)
+                try:
+                    for hour in weather_data['forecast']['forecastday'][0]['hour']:
+                        h_labels.append(hour['time'].split(' ')[1])
+                        h_temps.append(hour['temp_c'])
+                except Exception:
+                    pass
 
     return render_template('index.html', data=weather_data, data2=weather_data2, 
                            history_list=session['history'], labels=h_labels, 
@@ -117,6 +139,11 @@ def flight_tracker():
         search_query = request.form.get('search_query') or request.form.get('flight_number')
         
         if search_query:
+            # Save to session for persistence
+            session['last_flight_query'] = search_query
+            session['last_flight_type'] = search_type
+            session.modified = True
+
             # Dynamically reload key in case .env was modified after server start
             flight_fetcher.api_key = os.getenv("AVIATIONSTACK_API_KEY")
             
@@ -135,7 +162,20 @@ def flight_tracker():
                 
         return render_template('flight.html', data=flight_data, history_list=session['flight_history'], search_type=search_type, search_query=search_query)
 
-    return render_template('flight.html', data=flight_data, history_list=session['flight_history'], search_type='flight', search_query='')
+    # Handle GET request - Check for persisted search
+    search_query = session.get('last_flight_query')
+    search_type = session.get('last_flight_type', 'flight')
+    
+    if search_query:
+        flight_fetcher.api_key = os.getenv("AVIATIONSTACK_API_KEY")
+        if search_type == 'airport':
+            flight_data = flight_fetcher.fetch_flights_by_airport(search_query)
+        elif search_type == 'country':
+            flight_data = flight_fetcher.fetch_flights_by_country(search_query)
+        else:
+            flight_data = flight_fetcher.fetch_flight(search_query)
+
+    return render_template('flight.html', data=flight_data, history_list=session['flight_history'], search_type=search_type, search_query=search_query or '')
 
 @app.route('/privacy')
 def privacy():
