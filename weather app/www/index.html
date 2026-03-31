@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en" id="theme-tag">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WeatherPro Elite v9.0</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1163/1163736.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap');
+
+        .font-mono-clock {
+            font-family: 'JetBrains+Mono', monospace;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+
+<body x-data="weatherApp()"
+    class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-all duration-500 min-h-screen select-none">
+
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        <header
+            class="flex flex-wrap justify-between items-center mb-8 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border dark:border-slate-800">
+            <div class="flex items-center gap-6">
+                <div>
+                    <h1 class="text-3xl font-black text-blue-600 tracking-tighter italic">WeatherPro <span
+                            class="text-slate-400 font-light">Elite Max</span></h1>
+                    <div id="live-clock" class="text-lg font-mono-clock text-blue-500 dark:text-blue-400 mt-1">00:00:00
+                    </div>
+                </div>
+                <!-- Navigation Tabs -->
+                <div class="hidden lg:flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl ml-4">
+                    <a href="index.html"
+                        class="px-6 py-2 rounded-xl text-sm font-bold bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400 transition">🌤️
+                        Weather</a>
+                    <a href="flight.html"
+                        class="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition">✈️
+                        Flight Tracker</a>
+                </div>
+                <div class="hidden md:block h-10 w-[1px] bg-slate-200 dark:bg-slate-800 ml-4"></div>
+                <select id="langSelect" onchange="changeLanguage()"
+                    class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl text-xs font-bold outline-none cursor-pointer hidden md:block">
+                    <option value="en">ENGLISH 🇺🇸</option>
+                    <option value="si">සිංහල 🇱🇰</option>
+                    <option value="ta">தமிழ் 🇱🇰</option>
+                    <option value="fr">FRANÇAIS 🇫🇷</option>
+                    <option value="es">ESPAÑOL 🇪🇸</option>
+                </select>
+            </div>
+            <div class="flex gap-3 items-center">
+                <select id="langSelectMobile"
+                    onchange="document.getElementById('langSelect').value=this.value; changeLanguage();"
+                    class="bg-slate-100 dark:bg-slate-800 p-2 rounded-xl text-xs font-bold outline-none cursor-pointer md:hidden">
+                    <option value="en">EN</option>
+                    <option value="si">SI</option>
+                    <option value="ta">TA</option>
+                    <option value="fr">FR</option>
+                    <option value="es">ES</option>
+                </select>
+                <button onclick="startVoiceSearch()"
+                    class="p-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-2xl hover:scale-110 transition hidden sm:block">🎤</button>
+                <button onclick="toggleTheme()"
+                    class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl transition shadow-md"><span
+                        id="theme-icon">🌙</span></button>
+            </div>
+        </header>
+
+        <!-- Mobile Navigation Tabs -->
+        <div class="flex lg:hidden bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl mb-8 w-full">
+            <a href="index.html"
+                class="flex-1 text-center px-4 py-3 rounded-xl text-sm font-bold bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400 transition">🌤️
+                Weather</a>
+            <a href="flight.html"
+                class="flex-1 text-center px-4 py-3 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition">✈️
+                Flights</a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <aside class="contents lg:block lg:col-span-3 lg:space-y-6">
+                <form @submit.prevent="submitSearch()" id="searchForm"
+                    class="order-1 lg:order-none bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-2xl space-y-4 border dark:border-slate-800">
+                    <div class="space-y-1">
+                        <label id="labelCity1" class="text-[10px] font-bold text-blue-500 ml-2 uppercase">Primary
+                            City</label>
+                        <input type="text" x-model="searchForm.city" id="cityInput" placeholder="Enter City Name"
+                            required
+                            class="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    </div>
+                    <div class="space-y-1 border-t dark:border-slate-800 pt-4">
+                        <label id="labelCity2" class="text-[10px] font-bold text-slate-400 ml-2 uppercase">Compare with
+                            (Optional)</label>
+                        <input type="text" x-model="searchForm.city2" id="cityInput2" placeholder="Second City Name"
+                            class="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none outline-none focus:ring-2 focus:ring-slate-400 transition">
+                    </div>
+                    <input type="email" x-model="searchForm.email" id="emailInput" placeholder="Email Alerts"
+                        class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs border-none outline-none">
+                    <input type="text" x-model="searchForm.phone" id="phoneInput" placeholder="SMS Alerts"
+                        class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs border-none outline-none">
+                    <button type="submit" id="searchBtn"
+                        class="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition">Analyze
+                        & Compare</button>
+                </form>
+
+                <div
+                    class="order-3 lg:order-none bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border dark:border-slate-800">
+                    <h3 id="plannerTitle"
+                        class="text-[10px] font-black text-blue-500 mb-4 uppercase tracking-widest italic">Weather-Smart
+                        Planner</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="eventTitle" placeholder="Event Name"
+                            class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs border-none outline-none">
+                        <select id="eventDate"
+                            class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs border-none outline-none">
+                            <template x-if="data">
+                                <template x-for="day in data.forecast.forecastday">
+                                    <option :value="day.date"
+                                        x-text="day.date + ' (Rain: ' + day.day.daily_chance_of_rain + '%)'"></option>
+                                </template>
+                            </template>
+                            <template x-if="!data">
+                                <option id="optSearchFirst" disabled selected>Search first</option>
+                            </template>
+                        </select>
+                        <button id="addEventBtn" onclick="addEvent()"
+                            class="w-full bg-slate-900 dark:bg-blue-600 text-white p-3 rounded-xl text-xs font-bold transition">Add
+                            Event</button>
+                    </div>
+                    <div id="eventList" class="mt-4 space-y-2 max-h-40 overflow-y-auto no-scrollbar"></div>
+                </div>
+
+                <div
+                    class="order-4 lg:order-none bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border dark:border-slate-800 text-xs font-bold">
+                    <div class="text-[10px] text-slate-400 mb-2 uppercase italic tracking-widest"><span
+                            id="currencyTitle">Global Market</span> (USD/<span id="targetCurrency">LKR</span>)</div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span>1 USD =</span>
+                        <span id="liveRate" class="text-blue-600 animate-pulse">Fetching...</span>
+                    </div>
+                    <input type="number" id="usdInput" oninput="convertCurrency()" placeholder="Amount in USD"
+                        class="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 mb-2 outline-none">
+                    <div id="currencyOutput"
+                        class="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-500">0.00 LKR</div>
+                </div>
+
+                <div
+                    class="order-5 lg:order-none bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border dark:border-slate-800">
+                    <h3 id="historyTitle" class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-widest">
+                        Recent Activity</h3>
+                    <div class="space-y-2">
+                        <template x-for="city in history_list" :key="city">
+                            <button @click="searchHistory(city)"
+                                class="w-full text-left p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 transition text-sm font-semibold">📍
+                                <span x-text="city"></span></button>
+                        </template>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="order-2 lg:order-none lg:col-span-9 space-y-6">
+                <!-- Data Display -->
+                <div x-show="data" x-cloak class="space-y-6">
+                    <div
+                        class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-[3.5rem] p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
+                        <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <h2 class="text-2xl font-bold opacity-80"
+                                        x-text="data?.location?.name + ', ' + data?.location?.country"></h2>
+                                    <span id="dayNightTag"
+                                        class="px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase backdrop-blur-md"
+                                        x-text="data?.current?.is_day === 1 ? '☀️ DAY TIME' : '🌙 NIGHT TIME'">
+                                    </span>
+                                </div>
+                                <h3 class="text-8xl font-black tracking-tighter mb-4"
+                                    x-text="data?.current?.temp_c + '°C'"></h3>
+                                <div class="flex items-center justify-center md:justify-start gap-4">
+                                    <span class="bg-white/20 px-4 py-1 rounded-full text-xs font-bold backdrop-blur"
+                                        x-text="'H: ' + data?.forecast?.forecastday[0]?.day?.maxtemp_c + '° L: ' + data?.forecast?.forecastday[0]?.day?.mintemp_c + '°'"></span>
+                                    <span id="feelsLikeText" class="text-blue-100 text-sm"
+                                        x-text="'Feels like ' + data?.current?.feelslike_c + '°C'"></span>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <img :src="data?.current?.condition?.icon" class="w-32 h-32 animate-pulse mx-auto">
+                                <p class="text-xl font-black uppercase tracking-widest"
+                                    x-text="data?.current?.condition?.text"></p>
+                            </div>
+                        </div>
+                        <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            class="rounded-[3rem] overflow-hidden shadow-xl h-80 border-4 border-white dark:border-slate-800 relative">
+                            <iframe width="100%" height="100%"
+                                :src="'https://embed.windy.com/embed2.html?lat=' + data?.location?.lat + '&lon=' + data?.location?.lon + '&zoom=5&overlay=satellite'"
+                                frameborder="0"></iframe>
+                        </div>
+                        <div
+                            class="rounded-[3rem] overflow-hidden shadow-xl h-80 border-4 border-white dark:border-slate-800 relative">
+                            <iframe width="100%" height="100%" frameborder="0"
+                                :src="'https://maps.google.com/maps?q=' + data?.location?.lat + ',' + data?.location?.lon + '&z=10&output=embed'"></iframe>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-4 mt-8 px-4">
+                        <h3 id="forecastTitle"
+                            class="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] italic">
+                            Weather Forecast</h3>
+                        <span class="h-[1px] flex-grow mx-4 bg-slate-200 dark:bg-slate-800"></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 pb-6">
+                        <template x-for="day in data?.forecast?.forecastday">
+                            <div
+                                class="group bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] text-center shadow-lg border border-transparent hover:border-blue-500 hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500">
+                                <p class="text-[10px] font-black text-slate-400 group-hover:text-blue-500 uppercase tracking-widest transition-colors"
+                                    x-text="day.date"></p>
+
+                                <div class="relative py-4">
+                                    <img :src="day.day.condition.icon"
+                                        class="mx-auto w-16 h-16 drop-shadow-md group-hover:scale-110 transition-transform duration-500">
+                                    <span x-show="day.day.daily_chance_of_rain > 50"
+                                        class="absolute top-2 right-2 flex h-2 w-2">
+                                        <span
+                                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                    </span>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <p class="text-2xl font-black text-slate-800 dark:text-white"
+                                        x-text="Math.round(day.day.avgtemp_c) + '°'"></p>
+                                    <p class="text-[10px] font-bold text-blue-500/80 dark:text-blue-400/80 italic truncate px-2"
+                                        x-text="day.day.condition.text"></p>
+                                    <div class="flex justify-center gap-2 text-[10px] font-bold">
+                                        <span class="text-orange-500"
+                                            x-text="Math.round(day.day.maxtemp_c) + '°'"></span>
+                                        <span class="text-blue-400" x-text="Math.round(day.day.mintemp_c) + '°'"></span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 py-1.5 px-3 bg-blue-50 dark:bg-blue-900/30 rounded-full">
+                                    <p class="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase"
+                                        x-text="'🌧️ ' + day.day.daily_chance_of_rain + '%'"></p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Comparison Analysis -->
+                    <div x-show="data2" x-cloak
+                        class="bg-white dark:bg-slate-900 p-8 rounded-[3.5rem] shadow-2xl border-4 border-blue-500/20">
+                        <h3 id="compTitle"
+                            class="text-xs font-black text-blue-600 uppercase tracking-[0.2em] mb-6 text-center">⚔️ City
+                            Comparison Analysis</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-slate-400 text-[10px] uppercase border-b dark:border-slate-800">
+                                        <th id="thFeature" class="p-4">Feature</th>
+                                        <th class="p-4 text-blue-600 font-black" x-text="data?.location?.name"></th>
+                                        <th class="p-4 text-slate-500 font-black" x-text="data2?.location?.name"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm">
+                                    <tr class="border-b dark:border-slate-800">
+                                        <td id="tdTemp" class="p-4 font-bold">Temperature</td>
+                                        <td class="p-4" x-text="data?.current?.temp_c + '°C'"></td>
+                                        <td class="p-4" x-text="data2?.current?.temp_c + '°C'"></td>
+                                    </tr>
+                                    <tr class="border-b dark:border-slate-800">
+                                        <td id="tdCond" class="p-4 font-bold">Condition</td>
+                                        <td class="p-4" x-text="data?.current?.condition?.text"></td>
+                                        <td class="p-4" x-text="data2?.current?.condition?.text"></td>
+                                    </tr>
+                                    <tr class="border-b dark:border-slate-800">
+                                        <td id="tdRain" class="p-4 font-bold">Rain Chance</td>
+                                        <td class="p-4"
+                                            x-text="data?.forecast?.forecastday[0]?.day?.daily_chance_of_rain + '%'">
+                                        </td>
+                                        <td class="p-4"
+                                            x-text="data2?.forecast?.forecastday[0]?.day?.daily_chance_of_rain + '%'">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td id="tdHum" class="p-4 font-bold">Humidity</td>
+                                        <td class="p-4" x-text="data?.current?.humidity + '%'"></td>
+                                        <td class="p-4" x-text="data2?.current?.humidity + '%'"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-slate-900 p-8 rounded-[3.5rem] shadow-2xl border dark:border-slate-800">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 id="envTitle" class="text-xs font-bold text-blue-500 uppercase tracking-widest">
+                                Environmental Intelligence</h3>
+                            <span class="text-[10px] bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-bold"
+                                x-text="'Zone: ' + data?.location?.tz_id"></span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div
+                                class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-3xl text-center border-b-4 border-blue-500">
+                                <p id="txtRain" class="text-[10px] font-bold text-slate-500 uppercase">Rain</p>
+                                <p class="text-xl font-black"
+                                    x-text="data?.forecast?.forecastday[0]?.day?.daily_chance_of_rain + '%'"></p>
+                            </div>
+
+                            <div class="p-4 rounded-3xl text-center border-b-4 transition-colors duration-500"
+                                :class="getAqiStyle(data?.current?.air_quality?.['us-epa-index'])">
+                                <p id="txtAqi" class="text-[10px] font-bold opacity-80 uppercase tracking-widest"
+                                    x-text="'AQI (' + getAqiLabel(data?.current?.air_quality?.['us-epa-index']) + ')'">
+                                </p>
+                                <p class="text-2xl font-black" x-text="data?.current?.air_quality?.['us-epa-index']">
+                                </p>
+                            </div>
+                            <div
+                                class="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-3xl text-center border-b-4 border-orange-500">
+                                <p id="txtUv" class="text-[10px] font-bold text-slate-500 uppercase">UV</p>
+                                <p class="text-xl font-black" x-text="data?.current?.uv"></p>
+                            </div>
+                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-3xl text-center">
+                                <p id="txtHumidity" class="text-[10px] font-bold text-slate-500 uppercase">Humidity</p>
+                                <p class="text-xl font-black" x-text="data?.current?.humidity + '%'"></p>
+                            </div>
+                            <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-3xl text-center">
+                                <p id="txtPressure" class="text-[10px] font-bold text-slate-500 uppercase">Pressure</p>
+                                <p class="text-xl font-black"><span x-text="data?.current?.pressure_mb"></span><span
+                                        class="text-[8px] ml-1">mb</span></p>
+                            </div>
+                            <div
+                                class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-3xl text-center border-b-4 border-purple-500">
+                                <p id="txtVisibility" class="text-[10px] font-bold text-slate-500 uppercase">Visibility
+                                </p>
+                                <p class="text-xl font-black"><span x-text="data?.current?.vis_km"></span><span
+                                        class="text-[8px] ml-1">KM</span></p>
+                            </div>
+                        </div>
+                        <div
+                            class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6 pt-6 border-t dark:border-slate-800">
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">CO</p>
+                                <p class="font-black" x-text="(data?.current?.air_quality?.co || 0).toFixed(1)"></p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">NO₂</p>
+                                <p class="font-black" x-text="(data?.current?.air_quality?.no2 || 0).toFixed(1)"></p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">O₃</p>
+                                <p class="font-black" x-text="(data?.current?.air_quality?.o3 || 0).toFixed(1)"></p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">SO₂</p>
+                                <p class="font-black" x-text="(data?.current?.air_quality?.so2 || 0).toFixed(1)"></p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-orange-500 uppercase">PM 2.5</p>
+                                <p class="font-black" x-text="(data?.current?.air_quality?.pm2_5 || 0).toFixed(1)"></p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-red-500 uppercase">PM 10</p>
+                                <p class="font-black" x-text="(data?.current?.air_quality?.pm10 || 0).toFixed(1)"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-slate-900 p-8 rounded-[3.5rem] shadow-2xl border dark:border-slate-800">
+                        <h3 id="astroTitle" class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-6">Sun
+                            & Moon Cycles</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div
+                                class="flex flex-col items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-[2rem] border-b-4 border-yellow-400">
+                                <span class="text-2xl mb-2">🌅</span>
+                                <p id="labelSunrise" class="text-[10px] font-bold text-slate-400 uppercase">Sunrise</p>
+                                <p class="text-lg font-black" x-text="data?.forecast?.forecastday[0]?.astro?.sunrise">
+                                </p>
+                            </div>
+                            <div
+                                class="flex flex-col items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-[2rem] border-b-4 border-orange-600">
+                                <span class="text-2xl mb-2">🌇</span>
+                                <p id="labelSunset" class="text-[10px] font-bold text-slate-400 uppercase">Sunset</p>
+                                <p class="text-lg font-black" x-text="data?.forecast?.forecastday[0]?.astro?.sunset">
+                                </p>
+                            </div>
+                            <div
+                                class="flex flex-col items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-[2rem] border-b-4 border-blue-400">
+                                <span class="text-2xl mb-2">🌙</span>
+                                <p id="labelMoonrise" class="text-[10px] font-bold text-slate-400 uppercase">Moonrise
+                                </p>
+                                <p class="text-lg font-black" x-text="data?.forecast?.forecastday[0]?.astro?.moonrise">
+                                </p>
+                            </div>
+                            <div
+                                class="flex flex-col items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-[2rem] border-b-4 border-indigo-900">
+                                <span class="text-2xl mb-2">🌑</span>
+                                <p id="labelMoonset" class="text-[10px] font-bold text-slate-400 uppercase">Moonset</p>
+                                <p class="text-lg font-black" x-text="data?.forecast?.forecastday[0]?.astro?.moonset">
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div
+                            class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-xl border dark:border-slate-800">
+                            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">7-Day
+                                History Trend</h3><canvas id="historyChart" height="150"></canvas>
+                        </div>
+                        <div
+                            class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-xl border dark:border-slate-800">
+                            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">24-Hour
+                                Temp Variation</h3><canvas id="tempChart" height="150"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-2xl border dark:border-slate-800">
+                        <h3 id="newsTitle"
+                            class="text-xs font-bold text-red-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <span class="animate-ping h-2 w-2 rounded-full bg-red-500 opacity-75"></span>Live Weather
+                            World News
+                        </h3>
+                        <div class="h-[400px] overflow-y-auto pr-2 no-scrollbar">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <template x-for="article in news">
+                                    <a :href="article.url || '#'" target="_blank"
+                                        class="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
+                                        <img :src="article.image || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='"
+                                            class="w-20 h-20 rounded-2xl object-cover shadow-sm" alt="News image">
+                                        <div class="flex flex-col justify-center">
+                                            <h4 class="text-xs font-bold line-clamp-2"
+                                                x-text="article.title || 'Weather news headline missing'"></h4>
+                                            <p class="text-[8px] text-slate-400 mt-2"
+                                                x-text="(article.publishedAt || '').slice(0,10)"></p>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- END x-show="data" -->
+            </main>
+        </div>
+        <!-- Footer Section -->
+        <footer
+            class="w-full p-8 mt-12 mb-12 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border dark:border-slate-800 text-center">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-slate-400 text-sm">&copy; 2026 WeatherPro Elite. Accurate Data. Premium Experience.</p>
+                <div class="flex items-center gap-6">
+                    <a href="privacy.html"
+                        class="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">Privacy Policy</a>
+                    <a href="terms.html"
+                        class="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">Terms &
+                        Conditions</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Alpine App Logic
+        function weatherApp() {
+            return {
+                API_BASE_URL: 'https://weatherpro-elite-max.onrender.com',
+                data: null,
+                data2: null,
+                history_list: [],
+                labels: [],
+                temps: [],
+                history_graph: [],
+                news: [],
+                searchForm: { city: '', city2: '', email: '', phone: '' },
+
+                async init() {
+                    try {
+                        const res = await fetch(`${this.API_BASE_URL}/api/weather`);
+                        const json = await res.json();
+                        this.updateState(json);
+                    } catch (e) {
+                        console.error('Initial fetch failed', e);
+                        // Show a helpful offline message instead of doing nothing
+                        document.getElementById('live-clock').innerText = "OFFLINE";
+                    }
+
+                    if (localStorage.lang) { document.getElementById('langSelect').value = localStorage.lang; changeLanguage(); }
+                },
+
+                async submitSearch() {
+                    try {
+                        const res = await fetch(`${this.API_BASE_URL}/api/weather`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.searchForm)
+                        });
+                        const json = await res.json();
+                        this.updateState(json);
+                    } catch (e) {
+                        console.error('Search failed', e);
+                        alert("Could not connect to the Backend API! Make sure 'python app.py' is running and there are no CORS errors.");
+                    }
+                },
+
+                async searchHistory(city) {
+                    this.searchForm.city = city;
+                    this.searchForm.city2 = '';
+                    await this.submitSearch();
+                },
+
+                updateState(json) {
+                    this.data = json.data;
+                    this.data2 = json.data2;
+                    this.history_list = json.history_list;
+                    this.labels = json.labels;
+                    this.temps = json.temps;
+                    this.history_graph = json.history_graph;
+                    this.news = json.news;
+
+                    this.$nextTick(() => {
+                        this.renderCharts();
+                        if (this.data) {
+                            fetchExchangeRate(this.data.location.country);
+                            startClock(this.data.location.tz_id);
+                        } else {
+                            startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
+                        }
+                    });
+                },
+
+                renderCharts() {
+                    if (!this.data) return;
+                    if (window.hChart) window.hChart.destroy();
+                    if (window.tChart) window.tChart.destroy();
+
+                    window.hChart = new Chart(document.getElementById('historyChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: this.history_graph.map(i => i.date),
+                            datasets: [{ label: 'Temp', data: this.history_graph.map(i => i.temp), backgroundColor: '#3b82f6', borderRadius: 12 }]
+                        },
+                        options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+                    });
+
+                    window.tChart = new Chart(document.getElementById('tempChart'), {
+                        type: 'line',
+                        data: {
+                            labels: this.labels,
+                            datasets: [{ data: this.temps, borderColor: '#3b82f6', fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, pointRadius: 0 }]
+                        },
+                        options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } }
+                    });
+                },
+
+                getAqiStyle(aqi) {
+                    const map = {
+                        1: "bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-400",
+                        2: "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500 text-yellow-700 dark:text-yellow-400",
+                        3: "bg-orange-100 dark:bg-orange-900/30 border-orange-500 text-orange-700 dark:text-orange-400",
+                        4: "bg-red-100 dark:bg-red-900/30 border-red-500 text-red-700 dark:text-red-400",
+                    };
+                    return map[aqi] || "bg-purple-100 dark:bg-purple-900/30 border-purple-500 text-purple-700 dark:text-purple-400";
+                },
+
+                getAqiLabel(aqi) {
+                    const map = { 1: "Good", 2: "Moderate", 3: "Sensitive", 4: "Unhealthy" };
+                    return map[aqi] || "Hazardous";
+                }
+            }
+        }
+
+        // --- 1. PWA Service Worker (Register FIRST & OUTSIDE logic) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Registration Failed', err));
+            });
+        }
+
+        // Currency Logic
+        let currentRate = 312.45; // Default for Sri Lanka
+        let currentCurrency = "LKR";
+
+        async function fetchExchangeRate(countryName) {
+            let currencyCode = "LKR"; // Default fallback
+
+            try {
+                // 1. Get Country's primary Currency Code dynamically via reliable REST API
+                // Adding a broad fuzzy search in case exact match fails
+                const countryRes = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}`);
+                if (countryRes.ok) {
+                    const countryData = await countryRes.json();
+                    if (countryData && countryData[0] && countryData[0].currencies) {
+                        currencyCode = Object.keys(countryData[0].currencies)[0];
+                    }
+                }
+            } catch (e) {
+                console.warn('Country to Currency API failed, using fallback', e);
+                // Fallback simple map if the dictionary API ever goes down
+                const fallbackMap = {
+                    "India": "INR", "USA": "USD", "United States of America": "USD", "United Kingdom": "GBP",
+                    "France": "EUR", "Germany": "EUR", "Japan": "JPY", "Australia": "AUD", "Canada": "CAD",
+                    "UAE": "AED", "Saudi Arabia": "SAR", "China": "CNY", "Russia": "RUB", "Italy": "EUR", "Spain": "EUR"
+                };
+                currencyCode = fallbackMap[countryName] || "LKR";
+            }
+
+            currentCurrency = currencyCode;
+            document.getElementById('targetCurrency').innerText = currencyCode;
+
+            try {
+                // 2. Fetch live USD to Target Currency exchange rate using extremely robust public API
+                const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+                const result = await response.json();
+
+                if (result && result.rates) {
+                    currentRate = result.rates[currencyCode] || 1.0;
+                    document.getElementById('liveRate').innerText = currentRate.toFixed(2);
+                    document.getElementById('liveRate').classList.remove('animate-pulse');
+                    convertCurrency();
+                } else {
+                    throw new Error("Invalid exchange rate payload");
+                }
+            } catch (error) {
+                console.error("Currency Exchange fetch failed:", error);
+                document.getElementById('liveRate').innerText = "N/A";
+                document.getElementById('liveRate').classList.remove('animate-pulse');
+            }
+        }
+
+        function convertCurrency() {
+            const usd = document.getElementById('usdInput').value;
+            const output = (usd * currentRate).toFixed(2);
+            document.getElementById('currencyOutput').innerText = `${output} ${currentCurrency}`;
+        }
+
+        //language translations
+        const translations = {
+            en: {
+                env: "Environmental Intelligence", sBtn: "Analyze & Compare", news: "Live Weather World News", comp: "City Comparison Analysis", cur: "Global Market", plan: "Weather-Smart Planner", astro: "Sun & Moon Cycles", sunrise: "Sunrise", sunset: "Sunset", moonrise: "Moonrise", moonset: "Moonset",
+                city1: "Primary City", city2: "Compare with (Optional)", hTitle: "Recent Activity", addBtn: "Add Event", pName: "Event Name", pFirst: "Search first", rain: "Rain", hum: "Humidity", pres: "Pressure", vis: "Visibility", feat: "Feature", temp: "Temperature", cond: "Condition", forecastTitle: "Weather Forecast",
+            },
+            si: {
+                env: "පාරිසරික තොරතුරු", sBtn: "විශ්ලේෂණය කරන්න", news: "ලෝක කාලගුණ පුවත්", comp: "නගර සංසන්දනය", cur: "විනිමය අනුපාත", plan: "වැඩ සැලසුම්කරු", astro: "හිරු සහ සඳු චක්‍ර", sunrise: "හිරු උදාව", sunset: "හිරු බැසීම", moonrise: "සඳු උදාව", moonset: "සඳු බැසීම",
+                city1: "ප්‍රධාන නගරය", city2: "සසඳන නගරය (අත්‍යවශ්‍ය නොවේ)", hTitle: "මෑතකදී බැලූ", addBtn: "ඇතුළත් කරන්න", pName: "වැඩසටහන", pFirst: "පළමුව සොයන්න", rain: "වර්ෂාව", hum: "ආර්ද්‍රතාවය", pres: "පීඩනය", vis: "දෘශ්‍යතාව", feat: "විස්තරය", temp: "උෂ්ණත්වය", cond: "තත්ත්වය", forecastTitle: "කාලගුණ අනාවැකි"
+            },
+            ta: {
+                env: "சுற்றுச்சூழல் தகவல்", sBtn: "பகுப்பாய்வு மற்றும் ஒப்பிடு", news: "நேரடி உலக வானிலை செய்திகள்", comp: "நகர ஒப்பீடு", cur: "சந்தை", plan: "வானிலை திட்டமிடுபவர்", astro: "சூரிய & சந்திர சுழற்சிகள்", sunrise: "சூரிய உதயம்", sunset: "சூரிய அஸ்தமனம்", moonrise: "சந்திர உதயம்", moonset: "சந்திர அஸ்தமனம்",
+                city1: "முக்கிய நகரம்", city2: "ஒப்பீடு (விருப்பமானது)", hTitle: "சமீபத்திய செயல்பாடு", addBtn: "சேர்க்க", pName: "நிகழ்வு பெயர்", pFirst: "முதலில் தேடுங்கள்", rain: "மழை", hum: "ஈரப்பதம்", pres: "அழுத்தம்", vis: "பார்வை", feat: "அம்சம்", temp: "வெப்பநிலை", cond: "நிலை", forecastTitle: "வானிலை முன்னறிவிப்பு"
+            },
+            fr: {
+                env: "Intelligence Environnementale", sBtn: "Analyser & Comparer", news: "Nouvelles Météo Mondiales", comp: "Analyse Comparative des Villes", cur: "Marché", plan: "Planificateur Météo", astro: "Cycles Soleil & Lune", sunrise: "Lever du soleil", sunset: "Coucher du soleil", moonrise: "Lever de la lune", moonset: "Coucher de la lune",
+                city1: "Ville Principale", city2: "Comparer avec", hTitle: "Activité Récente", addBtn: "Ajouter", pName: "Nom de l'événement", pFirst: "Chercher d'abord", rain: "Pluie", hum: "Humidité", pres: "Pression", vis: "Visibilité", feat: "Caractéristique", temp: "Température", cond: "Condition", forecastTitle: "Prévisions Météo"
+            },
+            es: {
+                env: "Inteligencia Ambiental", sBtn: "Analizar y Comparar", news: "Noticias Meteorológicas", comp: "Análisis Comparativo de Ciudades", cur: "Mercado", plan: "Planificador Inteligente", astro: "Ciclos de Sol y Luna", sunrise: "Amanecer", sunset: "Atardecer", moonrise: "Salida de la luna", moonset: "Puesta de la luna",
+                city1: "Ciudad Principal", city2: "Comparar con", hTitle: "Actividad Reciente", addBtn: "Añadir", pName: "Nombre del evento", pFirst: "Buscar primero", rain: "Lluvia", hum: "Humedad", pres: "Presión", vis: "Visibilidad", feat: "Característica", temp: "Temperatura", cond: "Condición", forecastTitle: "Pronóstico del Tiempo"
+            }
+        };
+
+        function changeLanguage() {
+            const l = document.getElementById('langSelect').value;
+            localStorage.lang = l;
+            const t = translations[l];
+
+            const updates = {
+                'envTitle': t.env, 'searchBtn': t.sBtn, 'compTitle': t.comp, 'currencyTitle': t.cur, 'plannerTitle': t.plan,
+                'astroTitle': t.astro, 'labelSunrise': t.sunrise, 'labelSunset': t.sunset, 'labelMoonrise': t.moonrise,
+                'labelMoonset': t.moonset, 'labelCity1': t.city1, 'labelCity2': t.city2, 'historyTitle': t.hTitle,
+                'addEventBtn': t.addBtn, 'txtRain': t.rain, 'txtHumidity': t.hum, 'txtPressure': t.pres, 'txtVisibility': t.vis,
+                'thFeature': t.feat, 'tdTemp': t.temp, 'tdCond': t.cond, 'tdRain': t.rain, 'tdHum': t.hum, 'forecastTitle': t.forecastTitle
+            };
+
+            for (const [id, val] of Object.entries(updates)) {
+                let el = document.getElementById(id);
+                if (el) el.innerText = val;
+            }
+
+            if (document.getElementById('cityInput')) document.getElementById('cityInput').placeholder = t.city1;
+            if (document.getElementById('eventTitle')) document.getElementById('eventTitle').placeholder = t.pName;
+            if (document.getElementById('optSearchFirst')) document.getElementById('optSearchFirst').innerText = t.pFirst;
+
+            if (document.getElementById('newsTitle')) {
+                document.getElementById('newsTitle').innerHTML = `<span class="animate-ping h-2 w-2 rounded-full bg-red-500 opacity-75 mr-2"></span>` + t.news;
+            }
+        }
+
+        // clock logic
+        let clockTimer;
+        function startClock(timezone) {
+            if (clockTimer) clearInterval(clockTimer);
+            clockTimer = setInterval(() => {
+                try {
+                    const options = { timeZone: timezone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                    document.getElementById('live-clock').innerText = new Intl.DateTimeFormat('en-GB', options).format(new Date());
+                } catch (e) {
+                    // Fallback if timezone is invalid
+                    document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('en-GB');
+                }
+            }, 1000);
+        }
+
+        // Start the clock automatically on page load with local timezone
+        startClock(Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+        //theams
+        function toggleTheme() {
+            const isDark = document.getElementById('theme-tag').classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+            document.getElementById('theme-icon').innerText = isDark ? '🌙' : '☀️';
+        }
+        if (localStorage.theme === 'dark') {
+            document.getElementById('theme-tag').classList.add('dark');
+            document.getElementById('theme-icon').innerText = '🌙';
+        }
+        //voice search
+        function startVoiceSearch() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            const langMap = { en: 'en-US', si: 'si-LK', ta: 'ta-LK', fr: 'fr-FR', es: 'es-ES' };
+            recognition.lang = langMap[document.getElementById('langSelect').value] || 'en-US';
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                const cityInput = document.getElementById('cityInput');
+                cityInput.value = transcript;
+                cityInput.dispatchEvent(new Event('input', { bubbles: true })); // trigger Alpine update
+                document.getElementById('searchForm').dispatchEvent(new Event('submit', { bubbles: true }));
+            };
+            recognition.start();
+        }
+        // event planner
+        function addEvent() {
+            const title = document.getElementById('eventTitle').value;
+            const date = document.getElementById('eventDate').value;
+            if (!title) return alert("Please enter an event name!");
+            const event = { title, date, id: Date.now() };
+            let events = JSON.parse(localStorage.getItem('weatherEvents') || '[]');
+            events.push(event);
+            localStorage.setItem('weatherEvents', JSON.stringify(events));
+            renderEvents();
+            document.getElementById('eventTitle').value = "";
+        }
+
+        function renderEvents() {
+            const list = document.getElementById('eventList');
+            const events = JSON.parse(localStorage.getItem('weatherEvents') || '[]');
+            list.innerHTML = "";
+            events.forEach(e => {
+                list.innerHTML += `<div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl flex justify-between items-center border-l-4 border-blue-500 mb-2"><div><p class="text-[10px] font-bold">${e.title}</p><p class="text-[8px] opacity-60">${e.date}</p></div><button onclick="deleteEvent(${e.id})" class="text-red-500 text-xs">✕</button></div>`;
+            });
+        }
+
+        function deleteEvent(id) {
+            let events = JSON.parse(localStorage.getItem('weatherEvents') || '[]');
+            events = events.filter(e => e.id !== id);
+            localStorage.setItem('weatherEvents', JSON.stringify(events));
+            renderEvents();
+        }
+        renderEvents();
+    </script>
+</body>
+
+</html>

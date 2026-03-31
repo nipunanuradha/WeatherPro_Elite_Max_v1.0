@@ -1,0 +1,12 @@
+{
+  "appId": "com.weatherpro.elite",
+  "appName": "WeatherPro Elite",
+  "webDir": "www",
+  "plugins": {
+    "LiveUpdates": {
+      "appId": "d3ceb21a",
+      "channel": "Production",
+      "autoUpdateMethod": "background"
+    }
+  }
+}

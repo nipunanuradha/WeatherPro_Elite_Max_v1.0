@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" id="theme-tag">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - WeatherPro Elite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-all duration-500 min-h-screen">
+    <div class="max-w-4xl mx-auto p-6 md:p-12">
+        <header class="flex justify-between items-center mb-12 bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-xl border dark:border-slate-800">
+            <a href="index.html" class="text-2xl font-black text-blue-600 tracking-tighter italic">WeatherPro <span class="text-slate-400 font-light">Elite</span></a>
+            <button onclick="toggleTheme()" class="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl transition shadow-md"><span id="theme-icon">🌙</span></button>
+        </header>
+
+        <main class="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[3.5rem] shadow-2xl border dark:border-slate-800 prose dark:prose-invert max-w-none">
+            <h1 class="text-4xl font-black text-blue-600 mb-8 lowercase tracking-tighter">Privacy Policy</h1>
+            
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">1. Information We Collect</h2>
+                <p>We collect information that you provide directly to us when you use WeatherPro Elite:</p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><strong>Location Data:</strong> We process the city names you enter to provide weather and flight information.</li>
+                    <li><strong>Contact Information:</strong> If you sign up for alerts, we collect your email address or phone number.</li>
+                    <li><strong>Usage Data:</strong> We store your recent search history (last 5 searches) in local sessions to improve your experience.</li>
+                </ul>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">2. How We Use Your Information</h2>
+                <p>Your data is used solely to:</p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Provide weather forecasts and flight tracking data.</li>
+                    <li>Send weather alerts via email or SMS as requested by you.</li>
+                    <li>Personalize your experience through search history.</li>
+                </ul>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">3. Third-Party Services</h2>
+                <p>We use the following third-party services to power the app:</p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><strong>WeatherAPI:</strong> For weather data and news.</li>
+                    <li><strong>AviationStack:</strong> For flight information.</li>
+                    <li><strong>Twilio:</strong> For sending SMS alerts.</li>
+                    <li><strong>Google SMTP:</strong> For sending email alerts.</li>
+                </ul>
+                <p class="mt-4">These services may collect their own data as governed by their respective privacy policies.</p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">4. Data Security</h2>
+                <p>We take reasonable measures to protect your information. However, please note that no method of transmission over the internet is 100% secure.</p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">5. Your Rights</h2>
+                <p>You can stop all collection of information by the app easily by uninstalling it or ceasing to use it. You can also clear your search history by clearing your browser's session data.</p>
+            </section>
+
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">6. Contact Us</h2>
+                <p>If you have any questions about this Privacy Policy, please contact us at support@weatherpro-elite.com.</p>
+            </section>
+
+            <footer class="mt-12 pt-8 border-t dark:border-slate-800 text-center text-slate-400 text-sm">
+                <p>&copy; 2026 WeatherPro Elite. All rights reserved.</p>
+                <div class="mt-4 flex justify-center gap-6">
+                    <a href="index.html" class="hover:text-blue-500 transition">Back to Home</a>
+                    <a href="terms.html" class="hover:text-blue-500 transition">Terms & Conditions</a>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const isDark = document.getElementById('theme-tag').classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+            document.getElementById('theme-icon').innerText = isDark ? '🌙' : '☀️';
+        }
+        if (localStorage.theme === 'dark') {
+            document.getElementById('theme-tag').classList.add('dark');
+            document.getElementById('theme-icon').innerText = '🌙';
+        }
+    </script>
+</body>
+</html>
