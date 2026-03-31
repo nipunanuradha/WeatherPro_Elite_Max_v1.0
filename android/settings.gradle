@@ -15,7 +15,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        jcenter()
+        //jcenter()
+        maven { url "https://jcenter.bintray.com/" }
     }
 }
 
