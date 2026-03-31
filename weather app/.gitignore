@@ -1,1 +1,10 @@
 .env
+node_modules/
+android/app/build/
+.transforms/
+.gradle/
+.idea/
+.vscode/
+.DS_Store
+.env.example
+.env.example    

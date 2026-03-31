@@ -1,0 +1,8 @@
+{
+  "name": "WeatherPro Elite",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom",
+  "id": "d3ceb21a"
+}
