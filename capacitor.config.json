@@ -7,6 +7,14 @@
       "appId": "d3ceb21a",
       "channel": "Production",
       "autoUpdateMethod": "background"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "backgroundColor": "#ffffff",
+      "showSpinner": true,
+      "androidScaleType": "CENTER_CROP",
+      "splashFullScreen": true,
+      "splashImmersive": true
     }
   }
 }
